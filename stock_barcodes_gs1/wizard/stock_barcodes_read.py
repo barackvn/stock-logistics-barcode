@@ -47,25 +47,18 @@ class WizStockBarcodesRead(models.AbstractModel):
         lot_barcode = barcode_decoded.get("10", False)
         product_qty = barcode_decoded.get("37", False)
         if product_barcode:
-            product = self.env["product.product"].search(
+            if product := self.env["product.product"].search(
                 self._barcode_domain(product_barcode)
-            )
-            if not product:
-                self._set_messagge_info("not_found", _("Barcode for product not found"))
-                return False
-            else:
+            ):
                 processed = True
                 self.action_product_scaned_post(product)
-        if package_barcode:
-            packaging = self.env["product.packaging"].search(
-                self._barcode_domain(package_barcode)
-            )
-            if not packaging:
-                self._set_messagge_info(
-                    "not_found", _("Barcode for product packaging not found")
-                )
-                return False
             else:
+                self._set_messagge_info("not_found", _("Barcode for product not found"))
+                return False
+        if package_barcode:
+            if packaging := self.env["product.packaging"].search(
+                self._barcode_domain(package_barcode)
+            ):
                 if len(packaging) > 1:
                     self._set_messagge_info(
                         "more_match", _("More than one package found")
@@ -73,6 +66,11 @@ class WizStockBarcodesRead(models.AbstractModel):
                     return False
                 processed = True
                 self.action_packaging_scaned_post(packaging)
+            else:
+                self._set_messagge_info(
+                    "not_found", _("Barcode for product packaging not found")
+                )
+                return False
         if lot_barcode and self.product_id.tracking != "none":
             self.process_lot(barcode_decoded)
             processed = True

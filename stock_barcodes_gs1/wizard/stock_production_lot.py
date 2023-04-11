@@ -21,15 +21,13 @@ class WizStockBarcodesNewLot(models.TransientModel):
         if not lot_barcode:
             return
         if package_barcode:
-            packaging = self.env["product.packaging"].search(
+            if packaging := self.env["product.packaging"].search(
                 [("barcode", "=", package_barcode)]
-            )
-            if packaging:
+            ):
                 self.product_id = packaging.product_id
         elif product_barcode:
-            product = self.env["product.product"].search(
+            if product := self.env["product.product"].search(
                 [("barcode", "=", product_barcode)]
-            )
-            if product:
+            ):
                 self.product_id = product
         self.lot_name = lot_barcode

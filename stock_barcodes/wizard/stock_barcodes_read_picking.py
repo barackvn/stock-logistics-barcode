@@ -37,18 +37,13 @@ class WizStockBarcodesReadPicking(models.TransientModel):
         return [
             (
                 rec.id,
-                "{} - {} - {}".format(
-                    _("Barcode reader"),
-                    rec.picking_id.name or rec.picking_type_code,
-                    self.env.user.name,
-                ),
+                f'{_("Barcode reader")} - {rec.picking_id.name or rec.picking_type_code} - {self.env.user.name}',
             )
             for rec in self
         ]
 
     def _set_default_picking(self):
-        picking_id = self.env.context.get("default_picking_id", False)
-        if picking_id:
+        if picking_id := self.env.context.get("default_picking_id", False):
             self._set_candidate_pickings(self.env["stock.picking"].browse(picking_id))
 
     @api.model
@@ -69,8 +64,7 @@ class WizStockBarcodesReadPicking(models.TransientModel):
 
     def action_done(self):
         if self.check_done_conditions():
-            res = self._process_stock_move_line()
-            if res:
+            if res := self._process_stock_move_line():
                 self._add_read_log(res)
                 self.candidate_picking_ids.scan_count += 1
 
@@ -118,8 +112,7 @@ class WizStockBarcodesReadPicking(models.TransientModel):
         return domain
 
     def _set_candidate_pickings(self, candidate_pickings):
-        vals = [(5, 0, 0)]
-        vals.extend([(0, 0, {"picking_id": p.id}) for p in candidate_pickings])
+        vals = [(5, 0, 0), *[(0, 0, {"picking_id": p.id}) for p in candidate_pickings]]
         self.candidate_picking_ids = vals
 
     def _search_candidate_pickings(self, moves_todo=False):
@@ -186,25 +179,22 @@ class WizStockBarcodesReadPicking(models.TransientModel):
             )
             > 0
         ):
-            # Create an extra stock move line if this product has an
-            # initial demand.
-            moves = self.picking_id.move_lines.filtered(
+            if moves := self.picking_id.move_lines.filtered(
                 lambda m: (
                     m.product_id == self.product_id
                     and m.state in self._states_move_allowed()
                 )
-            )
-            if not moves:
+            ):
+                line = StockMoveLine.create(
+                    self._prepare_move_line_values(moves[0], available_qty)
+                )
+                move_lines_dic[line.id] = available_qty
+            else:
                 # TODO: Add picking if picking_id to message
                 self._set_messagge_info(
                     "info", _("There are no stock moves to assign this operation")
                 )
                 return False
-            else:
-                line = StockMoveLine.create(
-                    self._prepare_move_line_values(moves[0], available_qty)
-                )
-                move_lines_dic[line.id] = available_qty
         self.picking_product_qty = sum(moves_todo.mapped("quantity_done"))
         return move_lines_dic
 
@@ -219,12 +209,11 @@ class WizStockBarcodesReadPicking(models.TransientModel):
         if self.product_id.tracking != "none" and not self.lot_id:
             self._set_messagge_info("info", _("Waiting for input lot"))
             return False
-        if not self.picking_id:
-            if not self._search_candidate_pickings():
-                self._set_messagge_info(
-                    "info", _("Click on picking pushpin to lock it")
-                )
-                return False
+        if not self.picking_id and not self._search_candidate_pickings():
+            self._set_messagge_info(
+                "info", _("Click on picking pushpin to lock it")
+            )
+            return False
         if self.picking_id != self._candidate_picking_selected():
             self._set_messagge_info("info", _("Click on picking pushpin to lock it"))
             return False

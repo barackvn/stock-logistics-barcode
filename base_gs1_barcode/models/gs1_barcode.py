@@ -132,7 +132,7 @@ class GS1Barcode(models.Model):
         # * regular expression to match a variable length value ending with
         #   a <GS> character, to the group called "value".
         #   Must be formated with a pair of integers.
-        VARIABLE_LENGTH = r"(?P<value>[^" + separator + r"]{%d,%d}" + separator + r"?)"
+        VARIABLE_LENGTH = f"(?P<value>[^{separator}" + r"]{%d,%d}" + separator + r"?)"
         #  * regular expression to match the position of the decimal separator
         #    after the AI code, to the group called "decimal".
         DECIMAL = r"(?P<decimal>\d)"

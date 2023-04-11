@@ -28,9 +28,7 @@ class WizStockBarcodesReadInventory(models.TransientModel):
         return [
             (
                 rec.id,
-                "{} - {} - {}".format(
-                    _("Barcode reader"), rec.inventory_id.name, self.env.user.name
-                ),
+                f'{_("Barcode reader")} - {rec.inventory_id.name} - {self.env.user.name}',
             )
             for rec in self
         ]
@@ -131,7 +129,7 @@ class WizStockBarcodesReadInventory(models.TransientModel):
         for quant in quants:
             qty = qty_to_assign if qty_to_assign <= quant.quantity else quant.quantity
             self.lot_id = quant.lot_id
-            self.product_qty = qty if qty > 0.0 else 0.0
+            self.product_qty = max(qty, 0.0)
             self._add_inventory_line()
             qty_to_assign -= qty
         if qty_to_assign:

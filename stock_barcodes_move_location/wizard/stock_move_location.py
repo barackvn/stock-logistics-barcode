@@ -11,7 +11,7 @@ class StockMoveLocationWizard(models.TransientModel):
 
     def name_get(self):
         return [
-            (rec.id, "{} - {}".format(_("Move Between Locations"), self.env.user.name))
+            (rec.id, f'{_("Move Between Locations")} - {self.env.user.name}')
             for rec in self
         ]
 

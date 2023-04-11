@@ -123,7 +123,7 @@ class TestStockBarcodesPicking(TestStockBarcodes):
         self.assertEqual(self.wiz_scan_picking.res_model_id, self.stock_picking_model)
         self.assertEqual(self.wiz_scan_picking.res_id, self.picking_in_01.id)
         self.assertIn(
-            "Barcode reader - %s - " % (self.picking_in_01.name),
+            f"Barcode reader - {self.picking_in_01.name} - ",
             self.wiz_scan_picking.display_name,
         )
 
