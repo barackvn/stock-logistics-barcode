@@ -56,13 +56,12 @@ class WizStockBarcodesRead(models.AbstractModel):
         if self.barcode:
             self.message = _("Barcode: %s (%s)") % (self.barcode, message)
         else:
-            self.message = "%s" % message
+            self.message = f"{message}"
 
     def process_barcode(self, barcode):
         self._set_messagge_info("success", _("Barcode read correctly"))
         domain = self._barcode_domain(barcode)
-        product = self.env["product.product"].search(domain)
-        if product:
+        if product := self.env["product.product"].search(domain):
             if len(product) > 1:
                 self._set_messagge_info("more_match", _("More than one product found"))
                 return
@@ -70,8 +69,7 @@ class WizStockBarcodesRead(models.AbstractModel):
             self.action_done()
             return
         if self.env.user.has_group("product.group_stock_packaging"):
-            packaging = self.env["product.packaging"].search(domain)
-            if packaging:
+            if packaging := self.env["product.packaging"].search(domain):
                 if len(packaging) > 1:
                     self._set_messagge_info(
                         "more_match", _("More than one package found")
@@ -91,8 +89,7 @@ class WizStockBarcodesRead(models.AbstractModel):
                 self.action_lot_scaned_post(lot)
                 self.action_done()
                 return
-        location = self.env["stock.location"].search(domain)
-        if location:
+        if location := self.env["stock.location"].search(domain):
             self.location_id = location
             self._set_messagge_info("info", _("Waiting product"))
             return

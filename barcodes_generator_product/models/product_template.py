@@ -49,13 +49,10 @@ class ProductTemplate(models.Model):
     def create(self, vals):
         template = super().create(vals)
 
-        # this is needed to set given values to first variant after creation
-        # these fields should be moved to product as lead to confusion
-        # (Ref. product module feature in Odoo Core)
-        related_vals = {}
-        for field in ["barcode_rule_id", "barcode_base"]:
-            if vals.get(field, False):
-                related_vals[field] = vals[field]
-        if related_vals:
+        if related_vals := {
+            field: vals[field]
+            for field in ["barcode_rule_id", "barcode_base"]
+            if vals.get(field, False)
+        }:
             template.write(related_vals)
         return template

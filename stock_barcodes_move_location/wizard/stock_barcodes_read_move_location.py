@@ -41,20 +41,16 @@ class WizStockBarcodesReadMoveLocation(models.TransientModel):
         (res, error) = proc.communicate()
         _logger.info(res)
         barcodes = str(res.decode("utf-8"))
-        # TODO move to stock_barcodes_zbarcam module
-        # TODO implement other barcodes types
-        qr = find_between(barcodes, "QR-Code:", "\n")
-        if qr:
+        if qr := find_between(barcodes, "QR-Code:", "\n"):
             qr = qr.replace("}", "},")  # for multiple lectures
-            qr = "[" + qr + "]"
+            qr = f"[{qr}]"
             qr = safe_eval(qr)
             for bar in qr:
                 self.barcode = str(bar)
                 self.reset_qty()
                 self.process_barcode(str(bar))
                 self.action_manual_entry()
-        code128 = find_between(barcodes, "CODE-128:", "\n")
-        if code128:
+        if code128 := find_between(barcodes, "CODE-128:", "\n"):
             code128 = code128.split(",")
             for bar in code128:
                 self.barcode = str(bar)
@@ -64,7 +60,7 @@ class WizStockBarcodesReadMoveLocation(models.TransientModel):
 
     def name_get(self):
         return [
-            (rec.id, "{} - {}".format(_("Barcode reader"), self.env.user.name))
+            (rec.id, f'{_("Barcode reader")} - {self.env.user.name}')
             for rec in self
         ]
 
@@ -145,12 +141,12 @@ class WizStockBarcodesReadMoveLocation(models.TransientModel):
         )
         if log_scan:
             sml_line_ids = self.move_location_id.stock_move_location_line_ids
-            move_location_line = sml_line_ids.filtered(
+            if move_location_line := sml_line_ids.filtered(
                 lambda x: (
-                    x.product_id == log_scan.product_id and x.lot_id == log_scan.lot_id
+                    x.product_id == log_scan.product_id
+                    and x.lot_id == log_scan.lot_id
                 )
-            )
-            if move_location_line:
+            ):
                 qty = move_location_line.move_quantity - log_scan.product_qty
                 move_location_line.move_quantity = max(qty, 0.0)
                 self.move_location_qty = move_location_line.move_quantity
